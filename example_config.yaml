@@ -1,0 +1,12 @@
+bot:
+  owner_id: 298516367311765505
+  token: 'secret'
+  prefix: 'r!'
+
+server:
+  guild_id: [guild id here]
+  staff_role_id: [staff role id here]
+  communication_channel_id: [comm channel id here]
+
+postgres:
+  password: 'secret'
