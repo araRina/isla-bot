@@ -18,13 +18,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import asyncio
 import datetime
 
-import discord
-import numpy
-import tabulate
 from discord.ext import commands
 
 from common import time_date, time_dh, url_grabber
-from isla.cogs.errors import NoImageLinks, NoReportFound, UserCancellation
+from isla.errors import NoImageLinks, UserCancellation
 
 
 types = {'grief': 'griefer', 'chat': 'chat abuser', 'hack': 'hacker', 'other': 'abuser', 'tunnel': 'tunneler'}
@@ -309,3 +306,9 @@ class Context(commands.Context):
             check=message_to_date,
             skippable=True,
         )
+
+    async def get_time(self, type):
+        if type in ['grief', 'tunnel']:
+            return await self.get_time_dh()
+        else:
+            return await self.get_time_date()

@@ -26,7 +26,7 @@ from discord.ext.commands import Bot
 from .context import Context
 
 
-async def is_staff():
+def is_staff():
     def predicate(ctx):
         if ctx.guild:
             if ctx.guild.id == ctx.bot.config['discord']['guild_id']:

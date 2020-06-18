@@ -24,7 +24,7 @@ import logging
 import discord
 from discord.ext import commands
 
-from .errors import NoImageLinks, NoReportFound, UserCancellation
+from isla.errors import NoImageLinks, NoReportFound, UserCancellation
 from .formatting import remove_accents
 from .utils import converter_name, get_context
 

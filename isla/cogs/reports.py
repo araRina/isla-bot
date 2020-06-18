@@ -26,7 +26,7 @@ from discord.ext import commands
 from isla.context import Context, punishments, types
 from isla.isla import is_staff
 
-from .errors import NoReportFound, UserCancellation
+from isla.errors import NoReportFound, UserCancellation
 
 
 '''= SEMI AUTO REPORTING SUBCOMMANDS =
@@ -152,12 +152,14 @@ class reports(commands.Cog, name='reports'):
         return embed
 
     @commands.group()
+    @is_staff()
     async def report(self, ctx):
         if ctx.invoked_subcommand:
             return
         await ctx.send(reports_help.format(prefix=ctx.prefix))
 
     @report.command()
+    @is_staff()
     async def new(self, ctx: Context):
         username = await ctx.get_username()
         type = await ctx.get_type()
@@ -206,15 +208,17 @@ class reports(commands.Cog, name='reports'):
         if embed:
             await ctx.send(f'Report saved to ID {id}')
         else:
-            embed = await ctx.get_info_embed(username)
+            embed = await self.get_info_embed(username)
             await ctx.send(f'Report saved to ID {id}', embed=embed)
 
     @commands.Cog.listener()
+    @is_staff()
     async def on_message(self, message):
         if message.channel.id == self.bot.config['server']['communication_channel_id']:
             pass  # TODO: Program auto reporting
 
     @report.command()
+    @is_staff()
     async def info(self, ctx, username):
         embed = await self.get_info_embed(username)
 
@@ -224,6 +228,7 @@ class reports(commands.Cog, name='reports'):
             await ctx.send('Username not in database.')
 
     @report.command()
+    @is_staff()
     async def id(self, ctx, id: int):
         report = await self.bot.pool.fetchrow(
             """
@@ -247,7 +252,7 @@ class reports(commands.Cog, name='reports'):
 
         try:
             reporter = int(report['staff'])
-            reporter = reporter.mention
+            reporter = ctx.guild.get_member(reporter).mention
         except:
             reporter = report['staff']
 
@@ -272,6 +277,7 @@ class reports(commands.Cog, name='reports'):
             await ctx.send(post)
 
     @report.command()
+    @is_staff()
     async def edit(self, ctx, id: int):
         report = await self.bot.pool.fetchrow(
             """
