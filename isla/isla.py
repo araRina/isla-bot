@@ -29,9 +29,9 @@ from .context import Context
 def is_staff():
     def predicate(ctx):
         if ctx.guild:
-            if ctx.guild.id == ctx.bot.config['discord']['guild_id']:
+            if ctx.guild.id == ctx.bot.config['server']['guild_id']:
                 role_ids = [role.id for role in ctx.author.roles]
-                return ctx.bot.config['discord']['staff_role'] in role_ids or ctx.author.id == ctx.bot.owner_id
+                return ctx.bot.config['server']['staff_role_id'] in role_ids or ctx.author.id == ctx.bot.owner_id
         return ctx.author.id == ctx.bot.owner_id
 
     return commands.check(predicate)
