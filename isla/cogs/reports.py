@@ -35,17 +35,21 @@ Used in conjunction with a rollback id of a grief you fixed on the server. This 
 [{prefix}report add (report id) (rollback id)]
 If you had to use /rollback multiple times on a single grief, you can use this to add more to the existing report
 [{prefix}report list rollbacks]
-Used to get a list of the rollbacks you haven't reported for yet. If you aren't logged into Discord with the Terraria server bots, use {prefix}report list rollbacks public to see a list of reports made that weren't linked to Discord accounts.'''
+Used to get a list of the rollbacks you haven't reported for yet. If you aren't logged into Discord with the Terraria server bots, use {prefix}report list rollbacks public to see a list of reports made that weren't linked to Discord accounts.
+[{prefix}report list (page number)]
+Brings up a list of reports sorted by ID. 25 reports per page. Not giving a page number shows the latest page.'''
 
 reports_help = '''```asciidoc
 = MANUAL REPORTING SUBCOMMANDS =
 [{prefix}report new]
-Used to create a report if the server doesn't send data to the bot to help with the semi automatic reporting process. Functions exactly like the old {prefix}report.
+Used to create a report. Functions exactly like the old report command.
+[{prefix}report edit (report id)]
+Used to edit a report.
 = LISTING SUBCOMMANDS =
-[{prefix}report list (page number)]
-Brings up a list of reports sorted by ID. 25 reports per page. Not giving a page number shows the latest page.
 [{prefix}report id (report id)]
-Shows information on a given report by ID
+Shows information on a given report by ID.
+[{prefix}report info (username)]
+Shows information on a given username along with an associated list of reports.
 ```
 '''
 
