@@ -47,9 +47,9 @@ Used to create a report. Functions exactly like the old report command.
 Used to edit a report.
 = LISTING SUBCOMMANDS =
 [{prefix}report id (report id)]
-Shows information on a given report by ID.
+Shows information tied to a report id.
 [{prefix}report info (username)]
-Shows information on a given username along with an associated list of reports.
+Shows information on a rule-breaker and any past offenses they may have.
 ```
 '''
 

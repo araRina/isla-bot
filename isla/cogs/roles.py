@@ -10,7 +10,7 @@ class roles(commands.Cog):
         react_roles = await self.bot.pool.fetch(
             '''
             SELECT *
-                FROM terraria_one_roles
+                FROM terraria_one_roles;
             '''
         )
 
@@ -30,7 +30,7 @@ class roles(commands.Cog):
         react_roles = await self.bot.pool.fetch(
             '''
             SELECT *
-                FROM terraria_one_roles
+                FROM terraria_one_roles;
             '''
         )
 
@@ -47,4 +47,4 @@ class roles(commands.Cog):
 
 
 def setup(bot):
-    return roles(bot)
+    bot.add_cog(roles(bot))
