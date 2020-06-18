@@ -1,3 +1,20 @@
+"""
+Isla Bot: Reporting functionality for a Terraria Server
+Copyright (C) 2020 Rina
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 import asyncio
 import datetime
 
@@ -6,12 +23,13 @@ import numpy
 import tabulate
 from discord.ext import commands
 
-from common import UserCancellation, time_date, time_dh, url_grabber
+from common import time_date, time_dh, url_grabber
+from isla.cogs.errors import NoImageLinks, NoReportFound, UserCancellation
 
 
 types = {'grief': 'griefer', 'chat': 'chat abuser', 'hack': 'hacker', 'other': 'abuser', 'tunnel': 'tunneler'}
 
-punishments = ['tban', 'pban', 'mute', 'pmute', 'kick', 'warn']
+punishments = ['tban', 'pban', 'mute', 'pmute', 'kick', 'warn', 'null']
 
 
 def default_check(message):
@@ -107,97 +125,6 @@ class Context(commands.Context):
 
     # Staff Reports
 
-    async def get_info_embed(self, username):
-        reports = await self.bot.pool.fetch(
-            '''
-            SELECT * FROM staff_reports
-            WHERE username = $1
-            ORDER BY id ASC;
-            ''',
-            username
-        )
-
-        if not reports:
-            return None
-
-        def check(x, y):
-            if x[y]:
-                if y == 'happened_at':
-                    return (
-                            datetime.datetime.combine(x[y], datetime.time(hour=0, minute=0, second=0))
-                            - datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
-                    ).total_seconds()
-                if y == 'created_at':
-                    return (
-                            x[y] - datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
-                    ).total_seconds()
-            else:
-                return 0
-
-        try:
-            latest_created = sorted(reports, key=lambda r: check(r, 'created_at'), reverse=True)[0][
-                'created_at'
-            ].strftime('%d %b %Y at %I:%M %p.')
-            latest_created = f'Latest report: {latest_created}\n'
-        except:
-            latest_created = ''
-
-        try:
-            latest_happened = sorted(reports, key=lambda r: check(r, 'happened_at'), reverse=True)[0][
-                'happened_at'
-            ].strftime('%d %b %Y')
-            latest_happened = f'Latest offense: {latest_happened}\n'
-        except:
-            latest_happened = ''
-
-        offenses = await self.bot.pool.fetch(
-            '''
-            SELECT DISTINCT type
-            FROM staff_reports
-            WHERE username = $1
-            ''',
-            username
-        )
-
-        offenses = ', '.join([types[i['type']] for i in offenses])
-
-        embed = discord.Embed(title=f'User Info: {username}', description=offenses)
-
-        blocks_griefs = sum([report['blocks'] for report in reports if report['type'] == 'grief'])
-        blocks_tunnels = sum([report['blocks'] for report in reports if report['type'] == 'tunnel'])
-        griefs = sum([1 for report in reports if report['type'] == 'grief'])
-        tunnels = sum([1 for report in reports if report['type'] == 'grief'])
-
-        griefed = f'Blocks griefed: {blocks_griefs} broken, {round(blocks_griefs / griefs)} average\n' if griefs else ''
-        tunneled = f'Blocks tunneled: {blocks_tunnels} broken, {round(blocks_tunnels / tunnels)}average' if griefs else ''
-
-        embed.add_field(
-            name='General Data',
-            value=f'{latest_created}{latest_happened}{griefed}{tunneled}',
-            inline=False
-        )
-
-        embed.add_field(
-            name='List of reports',
-            value='```\n'
-                  + tabulate.tabulate(
-                [
-                    [
-                        report['id'],
-                        report['type'],
-                        str(report['blocks']),
-                        report['happened_at'].strftime('%d %b %Y') if report['happened_at'] else '',
-                        report['created_at'].strftime('%d %b %Y') if report['created_at'] else '',
-                    ]
-                    for report in reports
-                ],
-                headers=['id', 'type', 'blocks', 'happened_at', 'reported on'],
-            )
-                  + '```',
-            inline=False,
-        )
-        return embed
-
     async def get_username(self):
         return await self._get_field_info(msg_1='Please send the username of the rulebreaker')
 
@@ -259,8 +186,8 @@ class Context(commands.Context):
             check=check,
         )
 
-    async def get_image_links(self):
-        self.image_links = []
+    async def get_image_links(self, image_links=[]):
+        self.image_links = image_links
 
         def check(message):
             if message.__class__.__name__ == 'Message':
@@ -285,22 +212,64 @@ class Context(commands.Context):
             skippable=True,
         )
 
+    async def remove_image_links(self, image_links=[]):
+        if not image_links:
+            raise NoImageLinks()
+
+        def check(message):
+            try:
+                return image_links.pop(int(message.content))
+            except:
+                return False
+
+        def return_operation(message):
+            return image_links
+
+        images_by_number = '\n'.join(f'`{i}`: {j}' for i, j in enumerate(image_links))
+
+        return await self._get_field_info(
+            msg_1=f'Send the number corresponding with the image you want removed\n{images_by_number}',
+            msg_2='Incorrect input! Try again.',
+            check=check,
+            return_operation=return_operation,
+            skippable=True,
+        )
+
+    async def edit_image_links(self, image_links=[]):
+        def check(message):
+            return message.content.lower() in ['remove', 'add']
+
+        def return_operation(message):
+            return {'remove': self.remove_image_links, 'add': self.get_image_links}[message.content.lower()](
+                image_links=image_links
+            )
+
+        return await (
+            await self._get_field_info(
+                msg_1='Would you like to add or remove images? Proper responses include: `add`, `remove`',
+                msg_2='Incorrect input! Try again.',
+                return_operation=return_operation,
+                check=check,
+            )
+        )
+
     async def get_field(self):
         def check(message):
             return message.content.lower() in [
                 'username',
                 'type',
                 'image links',
-                'blocks broken',
+                'blocks',
                 'summary',
                 'happened at',
+                'punishment',
             ]
 
         def return_operation(message):
-            return message.content.lower()
+            return message.content.lower().replace(' ', '_')
 
         return await self._get_field_info(
-            msg_1=f'Which field do you want to edit? Fields: `username`, `type`, `image links`, `blocks broken`, `summary`, `happened at`.',
+            msg_1=f'Which field do you want to edit? Fields: `username`, `type`, `image links`, `blocks`, `summary`, `happened at`, `punishment`.',
             msg_2=f'Incorrect input! Try again.',
             return_operation=return_operation,
             check=check,

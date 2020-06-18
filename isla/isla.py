@@ -1,10 +1,27 @@
+"""
+Isla Bot: Reporting functionality for a Terraria Server
+Copyright (C) 2020 Rina
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+import logging
+
 import asyncpg
 import discord
 import ruamel.yaml
 from discord.ext import commands
 from discord.ext.commands import Bot
-
-from common import UserCancellation
 
 from .context import Context
 
@@ -30,12 +47,19 @@ class Isla(Bot):
         self.using = []
         self.pool = None
 
-        extensions = ['jishaku', 'isla.cogs.reports']
+        extensions = ['jishaku', 'isla.cogs.reports', 'isla.cogs.errors', 'isla.cogs.roles']
 
         for cog in extensions:
             self.load_extension(cog)
 
     def run(self):
+        logger = logging.getLogger("discord")
+        logger.setLevel(logging.INFO)
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter("[%(asctime)s] (%(levelname)s) %(name)s: %(message)s", datefmt="%y %b %d %H:%M:%S",)
+        )
+        logger.addHandler(handler)
         return super().run(self.config['bot']['token'])
 
     @classmethod
@@ -68,11 +92,3 @@ class Isla(Bot):
             await self.invoke(ctx)
         finally:
             self.using.remove(message.author.id)
-
-    async def on_command_error(self, ctx, error):
-        if isinstance(error, UserCancellation):
-            await ctx.send('Command cancelled.')
-        elif isinstance(error, discord.ext.commands.errors.MissingRequiredArgument):
-            await ctx.send('Missing argument!')
-        else:
-            raise error

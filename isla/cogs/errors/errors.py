@@ -16,7 +16,16 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from isla import Isla
+from discord.ext import commands
 
 
-Isla.with_config().run()
+class UserCancellation(commands.CommandError):
+    pass
+
+
+class NoReportFound(commands.CommandError):
+    pass
+
+
+class NoImageLinks(commands.CommandError):
+    pass

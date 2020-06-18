@@ -1,9 +1,24 @@
+"""
+Isla Bot: Reporting functionality for a Terraria Server
+Copyright (C) 2020 Rina
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 import re
 
 
-url_grabber = re.compile(
-    r""""/^((?:https?|steam):\/\/[^\s<]+[^<.,:;"'\]\s])/"""
-)
+url_grabber = re.compile(r""""/^((?:https?|steam):\/\/[^\s<]+[^<.,:;"'\]\s])/""")
 
 time_dh = re.compile(r'^([0-9]|[0-9][0-9]|[0-9][0-9][0-9]|[0-9][0-9][0-9][0-9])d([0-9]|0[0-9]|1[0-9]|2[0-3])h')
 
