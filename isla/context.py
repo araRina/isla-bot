@@ -110,11 +110,11 @@ class Context(commands.Context):
     async def get_info_embed(self, username):
         reports = await self.bot.pool.fetch(
             '''
-        SELECT * FROM staff_reports
-        WHERE username = $1
-        ORDER BY id ASC;
-        ''',
-            username,
+            SELECT * FROM staff_reports
+            WHERE username = $1
+            ORDER BY id ASC;
+            ''',
+            username
         )
 
         if not reports:
@@ -124,64 +124,63 @@ class Context(commands.Context):
             if x[y]:
                 if y == 'happened_at':
                     return (
-                        datetime.datetime.combine(x[y], datetime.time(hour=0, minute=0, second=0))
-                        - datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+                            datetime.datetime.combine(x[y], datetime.time(hour=0, minute=0, second=0))
+                            - datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
                     ).total_seconds()
                 if y == 'created_at':
                     return (
-                        x[y] - datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
+                            x[y] - datetime.datetime(year=1, month=1, day=1, hour=0, minute=0, second=0)
                     ).total_seconds()
             else:
                 return 0
 
-        latest = sorted(reports, key=lambda r: check(r, 'created_at'), reverse=True)[0]
+        try:
+            latest_created = sorted(reports, key=lambda r: check(r, 'created_at'), reverse=True)[0][
+                'created_at'
+            ].strftime('%d %b %Y at %I:%M %p.')
+            latest_created = f'Latest report: {latest_created}\n'
+        except:
+            latest_created = ''
 
-        latest_happened = sorted(reports, key=lambda r: check(r, 'happened_at'), reverse=True)[0][
-            'happened_at'
-        ].strftime('%d %b %Y')
+        try:
+            latest_happened = sorted(reports, key=lambda r: check(r, 'happened_at'), reverse=True)[0][
+                'happened_at'
+            ].strftime('%d %b %Y')
+            latest_happened = f'Latest offense: {latest_happened}\n'
+        except:
+            latest_happened = ''
 
         offenses = await self.bot.pool.fetch(
             '''
             SELECT DISTINCT type
             FROM staff_reports
             WHERE username = $1
-        ''',
-            username,
+            ''',
+            username
         )
 
         offenses = ', '.join([types[i['type']] for i in offenses])
 
-        embed = discord.Embed(title=f'**User Info:** {username}', description=offenses)
+        embed = discord.Embed(title=f'User Info: {username}', description=offenses)
 
-        blocks = sum([report['blocks'] if report['type'] == 'grief' else 0 for report in reports])
+        blocks_griefs = sum([report['blocks'] for report in reports if report['type'] == 'grief'])
         blocks_tunnels = sum([report['blocks'] for report in reports if report['type'] == 'tunnel'])
-        griefs = sum([numpy.sign(int(report['type'] == 'grief')) for report in reports])
-        tunnels = sum([numpy.sign(int(report['type'] == 'grief')) for report in reports])
+        griefs = sum([1 for report in reports if report['type'] == 'grief'])
+        tunnels = sum([1 for report in reports if report['type'] == 'grief'])
 
-        if latest['created_at']:
-            embed.add_field(
-                name='**Latest report on**', value=latest['created_at'].strftime('%d %b %Y at %I:%M %p.'), inline=True
-            )
-
-        if latest_happened['happened_at']:
-            embed.add_field(
-                name='**Latest transgression on**',
-                value=latest_happened['happened_at'].strftime('%d %b %Y'),
-                inline=True,
-            )
-
-        if griefs:
-            embed.add_field(name='**Blocks griefed**', value=f'{blocks} broken, {blocks / griefs} on average')
-
-        if tunnels:
-            embed.add_field(
-                name='**Blocks tunneled**', value=f'{blocks_tunnels} broken, {blocks_tunnels / tunnels} on average',
-            )
+        griefed = f'Blocks griefed: {blocks_griefs} broken, {round(blocks_griefs / griefs)} average\n' if griefs else ''
+        tunneled = f'Blocks tunneled: {blocks_tunnels} broken, {round(blocks_tunnels / tunnels)}average' if griefs else ''
 
         embed.add_field(
-            name='**List of reports**',
+            name='General Data',
+            value=f'{latest_created}{latest_happened}{griefed}{tunneled}',
+            inline=False
+        )
+
+        embed.add_field(
+            name='List of reports',
             value='```\n'
-            + tabulate.tabulate(
+                  + tabulate.tabulate(
                 [
                     [
                         report['id'],
@@ -194,7 +193,7 @@ class Context(commands.Context):
                 ],
                 headers=['id', 'type', 'blocks', 'happened_at', 'reported on'],
             )
-            + '```',
+                  + '```',
             inline=False,
         )
         return embed

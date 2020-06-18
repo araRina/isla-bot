@@ -4,8 +4,9 @@ import sys
 from discord.ext import commands
 
 from common import UserCancellation
+from common import NoReportFound
 from isla.context import Context
-
+from isla.isla import is_staff
 
 '''= SEMI AUTO REPORTING SUBCOMMANDS =
 [{prefix}report create (rollback id)]
@@ -22,6 +23,8 @@ Used to create a report if the server doesn't send data to the bot to help with 
 = LISTING SUBCOMMANDS =
 [{prefix}report list (page number)]
 Brings up a list of reports sorted by ID. 25 reports per page. Not giving a page number shows the latest page.
+[{prefix}report id (report id)]
+Shows information on a given report by ID
 ```
 '''
 
@@ -103,6 +106,22 @@ class reports(commands.Cog, name='reports'):
             await new_ctx.send(embed=embed)
         else:
             await new_ctx.send('Username not in database.')
+
+    @report.command()
+    async def id(self, ctx, id: int):
+        report = await self.pool.fetchrow(
+        """
+        SELECT *
+            FROM staff_reports
+            WHERE id = $1;
+        """, id)
+
+        if not report:
+            raise NoReportFound('No report by that ID was found.')
+
+
+
+
 
 
 def setup(bot):
